@@ -52,7 +52,7 @@ setRegister state index value = state { registers = replaceAt index value $ regi
 registerAt :: CpuState -> Int -> Int
 registerAt state index = (registers state) !! index
 
--- TODO: Need to increment cycles with each execution
+-- TODO: Need to increment cycles and PC with each execution
 interpret :: Program -> CpuState -> CpuState
 interpret [] state = state
 interpret ("00":_) state = interpret [] state
