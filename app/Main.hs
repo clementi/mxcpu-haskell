@@ -1,8 +1,10 @@
 module Main where
 
+import Data.List.Split (splitOn)
+
 import Lib
 
-type Program = String
+type Program = [String]
 
 data CpuState = CpuState { cycles :: Int
                          , inc :: Int
@@ -21,7 +23,7 @@ replaceAt n value (x:xs)
   | otherwise = x : replaceAt (n-1) value xs
 
 incCycles :: CpuState -> CpuState
-incCycles state = state = { succ (cycles state) }
+incCycles state = state { cycles = succ (cycles state) }
 
 setCycles :: CpuState -> Int -> CpuState
 setCycles state value = state { cycles = value }
@@ -39,24 +41,24 @@ setRegister :: CpuState -> Int -> Int -> CpuState
 setRegister state index value = state { registers = replaceAt index value $ registers state }
 
 registerAt :: CpuState -> Int -> Int
-registerAt state index = index !! (registers state)
+registerAt state index = (registers state) !! index
 
 interpret :: Program -> CpuState -> CpuState
 interpret [] state = state
-interpret ("B1":n:bs) state = interpret bs (setPc state n)
+interpret ("B1":n:bs) state = interpret bs (setPc state (toInt n))
 interpret ("B2":idx:n:bs) state =
-  if acc state == registerAt state idx
-    then interpret bs (setPc state n)
+  if acc state == registerAt state (toInt idx)
+    then interpret bs (setPc state (toInt n))
     else interpret bs (setPc state 3)
 interpret ("B3":value:n:bs) state =
-  if acc state == value
-    then interpret bs (setPc state n)
+  if acc state == toInt value
+    then interpret bs (setPc state (toInt n))
     else interpret bs (setPc state 3)
 -- TODO: C0
 
 main :: IO ()
 main = do
-  program <- getContents
+  program <- splitOn " " <$> getContents
   let state = CpuState { cycles = 0
                        , inc = 0
                        , pc = 0
