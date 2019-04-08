@@ -1,4 +1,4 @@
-module MXCPU (Program, CpuState(..), interpret) where
+module MXCPU (Program, CpuState(..), initialState, interpret) where
 
 type Program = [String]
 
@@ -8,6 +8,14 @@ data CpuState = CpuState { cycles :: Int
                          , acc :: Int
                          , registers :: [Int]
                          } deriving (Show)
+
+initialState :: CpuState
+initialState = CpuState { cycles = 0
+                        , inc = 0
+                        , pc = 0
+                        , acc = 0
+                        , registers = take 16 (repeat 0)
+                        }
 
 toInt :: String -> Int
 toInt str = read ("0x" <> str) :: Int
