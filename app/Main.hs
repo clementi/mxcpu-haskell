@@ -75,7 +75,7 @@ interpret ("C6":bs) state = interpret bs (setInc state (acc state))
 interpret ("D0":idx:bs) state = interpret bs (setAcc state (registerAt state (toInt idx)))
 interpret ("D1":value:bs) state = interpret bs (setAcc state (toInt value))
 interpret ("D2":idx:bs) state = interpret bs (setRegister state (toInt idx) (acc state))
-interpret (b:bs) _ = error ("unknown instruction " <> b)
+interpret (b:_) _ = error ("unknown instruction " <> b)
 
 main :: IO ()
 main = do
