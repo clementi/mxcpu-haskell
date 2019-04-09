@@ -59,7 +59,6 @@ registerAt :: CpuState -> Int -> Int
 registerAt state index = (registers state) ! index
 
 -- TODO: Need to increment cycles and PC with each execution
--- TODO: Need to use array instead of list for program. Possibly for registers also.
 interpret :: Program -> CpuState -> CpuState
 interpret program state = state
 -- interpret [] state = state
