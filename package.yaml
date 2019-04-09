@@ -24,6 +24,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - split >= 0.2.3 && < 0.2.4
+  - MissingH >= 1.4.0 && < 1.5.0
 
 executables:
   mxcpu-exe:
@@ -35,8 +38,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - mxcpu
-    - split >= 0.2.3 && < 0.2.4
-    - MissingH >= 1.4.0 && < 1.5.0
 
 tests:
   mxcpu-test:

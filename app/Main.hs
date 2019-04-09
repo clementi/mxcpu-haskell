@@ -1,12 +1,9 @@
 module Main where
 
-import Data.List.Split (splitOn)
-import Data.String.Utils (strip)
-
-import MXCPU (Program, CpuState(..), initialState, interpret)
+import MXCPU (Program, CpuState(..), initialState, loadProgram, interpret)
 
 main :: IO ()
 main = do
-  program <- (splitOn " ") . strip <$> getContents
+  program <- loadProgram <$> getContents
   let finalState = interpret program initialState
   putStrLn $ show finalState

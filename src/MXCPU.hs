@@ -1,6 +1,9 @@
-module MXCPU (Program, CpuState(..), initialState, interpret) where
+module MXCPU (Program, CpuState(..), initialState, loadProgram, interpret) where
 
-type Program = [String]
+import Data.List.Split (splitOn)
+import Data.String.Utils (strip)
+
+type Program = [Int]
 
 data CpuState = CpuState { cycles :: Int
                          , inc :: Int
@@ -17,8 +20,8 @@ initialState = CpuState { cycles = 0
                         , registers = take 16 (repeat 0)
                         }
 
-toInt :: String -> Int
-toInt str = read ("0x" <> str) :: Int
+loadProgram :: String -> Program
+loadProgram = (map (\b -> read ("0x" <> b) :: Int)) . (splitOn " ") . strip
 
 replaceAt :: Int -> a -> [a] -> [a]
 replaceAt _ _ [] = []
@@ -60,26 +63,26 @@ registerAt state index = (registers state) !! index
 -- TODO: Need to use array instead of list for program. Possibly for registers also.
 interpret :: Program -> CpuState -> CpuState
 interpret [] state = state
-interpret ("00":_) state = interpret [] state
-interpret ("B1":n:bs) state = interpret bs (setPc state (toInt n))
-interpret ("B2":idx:n:bs) state =
-  if acc state == registerAt state (toInt idx)
-    then interpret bs (setPc state (toInt n))
+interpret (0x00:_) state = interpret [] state
+interpret (0xB1:n:bs) state = interpret bs (setPc state n)
+interpret (0xB2:idx:n:bs) state =
+  if acc state == registerAt state idx
+    then interpret bs (setPc state n)
     else interpret bs (setPc state 3)
-interpret ("B3":value:n:bs) state =
-  if acc state == toInt value
-    then interpret bs (setPc state (toInt n))
+interpret (0xB3:value:n:bs) state =
+  if acc state == value
+    then interpret bs (setPc state n)
     else interpret bs (setPc state 3)
-interpret ("C0":idx:bs) state = interpret bs (addAcc state registerValue)
-  where registerValue = registerAt state (toInt idx)
-interpret ("C1":value:bs) state = interpret bs (addAcc state (toInt value))
-interpret ("C2":bs) state = interpret bs (incInc state)
-interpret ("C3":bs) state = interpret bs (decInc state)
-interpret ("C4":bs) state = interpret bs (setInc state 0)
-interpret ("C5":bs) state = interpret bs (setAcc state (inc state))
-interpret ("C6":bs) state = interpret bs (setInc state (acc state))
-interpret ("D0":idx:bs) state = interpret bs (setAcc state registerValue)
-  where registerValue = registerAt state (toInt idx)
-interpret ("D1":value:bs) state = interpret bs (setAcc state (toInt value))
-interpret ("D2":idx:bs) state = interpret bs (setRegister state (toInt idx) (acc state))
-interpret (b:_) _ = error ("unknown instruction " <> b)
+interpret (0xC0:idx:bs) state = interpret bs (addAcc state registerValue)
+  where registerValue = registerAt state idx
+interpret (0xC1:value:bs) state = interpret bs (addAcc state value)
+interpret (0xC2:bs) state = interpret bs (incInc state)
+interpret (0xC3:bs) state = interpret bs (decInc state)
+interpret (0xC4:bs) state = interpret bs (setInc state 0)
+interpret (0xC5:bs) state = interpret bs (setAcc state (inc state))
+interpret (0xC6:bs) state = interpret bs (setInc state (acc state))
+interpret (0xD0:idx:bs) state = interpret bs (setAcc state registerValue)
+  where registerValue = registerAt state idx
+interpret (0xD1:value:bs) state = interpret bs (setAcc state value)
+interpret (0xD2:idx:bs) state = interpret bs (setRegister state idx (acc state))
+interpret (b:_) _ = error ("unknown instruction " <> show b)
