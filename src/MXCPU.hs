@@ -26,7 +26,8 @@ hex2int n = read ("0x" <> n) :: Int
 
 loadProgram :: String -> Program
 loadProgram s = listArray (0, length bytes - 1) bytes
-  where bytes = ((map hex2int) . (splitOn " ") . strip) s
+  where bytes = toBytes s
+        toBytes = map hex2int . splitOn " " . strip
 
 incCycles :: CpuState -> CpuState
 incCycles state = state { cycles = succ (cycles state) }
