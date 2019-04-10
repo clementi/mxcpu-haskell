@@ -80,15 +80,15 @@ setPcToByte :: Int -> Program -> CpuState -> CpuState
 setPcToByte pctr program state = interpret program (incCycles (setPc state n))
   where n = program ! (pctr + 1)
 
-jumpEqByte :: Int -> Program -> CpuState -> CpuState
-jumpEqByte pctr program state
+jumpEqRegister :: Int -> Program -> CpuState -> CpuState
+jumpEqRegister pctr program state
   | acc state == registerAt state index = interpret program (incCycles (setPc state n))
   | otherwise = interpret program (incCycles (setPc state 3))
   where index = program ! (pctr + 1)
         n = program ! (pctr + 2)
 
-jumpEqRegister :: Int -> Program -> CpuState -> CpuState
-jumpEqRegister pctr program state
+jumpEqByte :: Int -> Program -> CpuState -> CpuState
+jumpEqByte pctr program state
   | acc state == value = interpret program (incCycles (setPc state n))
   | otherwise = interpret program (incCycles (setPc state 3))
   where value = program ! (pctr + 1)
@@ -121,8 +121,8 @@ interpret program state
   | arrayLength program == 0 = state
   | op == 0x00 = incCycles . halt $ state
   | op == 0xB1 = setPcToByte pctr program state
-  | op == 0xB2 = jumpEqByte pctr program state
-  | op == 0xB3 = jumpEqRegister pctr program state
+  | op == 0xB2 = jumpEqRegister pctr program state
+  | op == 0xB3 = jumpEqByte pctr program state
   | op == 0xC0 = addMemoryToAcc pctr program state
   | op == 0xC1 = addValueToAcc pctr program state
   | op == 0xC2 = interpret program (incPc (incCycles (incInc state)))
