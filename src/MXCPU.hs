@@ -65,13 +65,9 @@ setRegister state index value = state { registers = registers state // [(index, 
 registerAt :: CpuState -> Int -> Int
 registerAt state index = (registers state) ! index
 
-isEmpty :: Array Int Int -> Bool
-isEmpty array = upper <= lower
-  where (upper, lower) = bounds array
-
 arrayLength :: Array Int Int -> Int 
 arrayLength array = upper - lower + 1
-  where (upper, lower) = bounds array
+  where (lower, upper) = bounds array
 
 halt :: CpuState -> CpuState
 halt = id
