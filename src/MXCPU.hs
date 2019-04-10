@@ -47,6 +47,12 @@ setInc state value = state { inc = value }
 setPc :: CpuState -> Int -> CpuState
 setPc state value = state { pc = value }
 
+incPc :: CpuState -> CpuState
+incPc state = state { pc = succ (pc state) }
+
+incPcBy :: Int -> CpuState -> CpuState
+incPcBy n state = setPc state (n + pc state)
+
 setAcc :: CpuState -> Int -> CpuState
 setAcc state value = state { acc = value }
 
@@ -59,30 +65,75 @@ setRegister state index value = state { registers = registers state // [(index, 
 registerAt :: CpuState -> Int -> Int
 registerAt state index = (registers state) ! index
 
--- TODO: Need to increment cycles and PC with each execution
+isEmpty :: Array Int Int -> Bool
+isEmpty array = upper <= lower
+  where (upper, lower) = bounds array
+
+arrayLength :: Array Int Int -> Int 
+arrayLength array = upper - lower + 1
+  where (upper, lower) = bounds array
+
+halt :: CpuState -> CpuState
+halt = id
+
+setPcToByte :: Int -> Program -> CpuState -> CpuState
+setPcToByte pctr program state = interpret program (incCycles (setPc state n))
+  where n = program ! (pctr + 1)
+
+jumpEqByte :: Int -> Program -> CpuState -> CpuState
+jumpEqByte pctr program state
+  | acc state == registerAt state index = interpret program (incCycles (setPc state n))
+  | otherwise = interpret program (incCycles (setPc state 3))
+  where index = program ! (pctr + 1)
+        n = program ! (pctr + 2)
+
+jumpEqRegister :: Int -> Program -> CpuState -> CpuState
+jumpEqRegister pctr program state
+  | acc state == value = interpret program (incCycles (setPc state n))
+  | otherwise = interpret program (incCycles (setPc state 3))
+  where value = program ! (pctr + 1)
+        n = program ! (pctr + 2)
+
+addMemoryToAcc :: Int -> Program -> CpuState -> CpuState
+addMemoryToAcc pctr program state = interpret program (incPcBy 2 (incCycles (addAcc state registerValue)))
+  where index = program ! (pctr + 1)
+        registerValue = registerAt state index
+
+addValueToAcc :: Int -> Program -> CpuState -> CpuState
+addValueToAcc pctr program state = interpret program (incPcBy 2 (incCycles (addAcc state value)))
+  where value = program ! (pctr + 1)
+
+copyMemoryToAcc :: Int -> Program -> CpuState -> CpuState
+copyMemoryToAcc pctr program state = interpret program (incPcBy 3 (incCycles (setAcc state registerValue)))
+  where index = program ! (pctr + 1)
+        registerValue = registerAt state index
+
+setAccToValue :: Int -> Program -> CpuState -> CpuState
+setAccToValue pctr program state = interpret program (incPcBy 2 (incCycles (setAcc state value)))
+  where value = program ! (pctr + 1)
+
+copyAccToMemory :: Int -> Program -> CpuState -> CpuState
+copyAccToMemory pctr program state = interpret program (incPcBy 2 (incCycles (setRegister state index (acc state))))
+  where index = program ! (pctr + 1)
+
 interpret :: Program -> CpuState -> CpuState
-interpret program state = state
--- interpret [] state = state
--- interpret (0x00:_) state = interpret [] state
--- interpret (0xB1:n:bs) state = interpret bs (setPc state n)
--- interpret (0xB2:idx:n:bs) state =
---   if acc state == registerAt state idx
---     then interpret bs (setPc state n)
---     else interpret bs (setPc state 3)
--- interpret (0xB3:value:n:bs) state =
---   if acc state == value
---     then interpret bs (setPc state n)
---     else interpret bs (setPc state 3)
--- interpret (0xC0:idx:bs) state = interpret bs (addAcc state registerValue)
---   where registerValue = registerAt state idx
--- interpret (0xC1:value:bs) state = interpret bs (addAcc state value)
--- interpret (0xC2:bs) state = interpret bs (incInc state)
--- interpret (0xC3:bs) state = interpret bs (decInc state)
--- interpret (0xC4:bs) state = interpret bs (setInc state 0)
--- interpret (0xC5:bs) state = interpret bs (setAcc state (inc state))
--- interpret (0xC6:bs) state = interpret bs (setInc state (acc state))
--- interpret (0xD0:idx:bs) state = interpret bs (setAcc state registerValue)
---   where registerValue = registerAt state idx
--- interpret (0xD1:value:bs) state = interpret bs (setAcc state value)
--- interpret (0xD2:idx:bs) state = interpret bs (setRegister state idx (acc state))
--- interpret (b:_) _ = error ("unknown instruction " <> show b)
+interpret program state
+  | arrayLength program == 0 = state
+  | op == 0x00 = incCycles . halt $ state
+  | op == 0xB1 = setPcToByte pctr program state
+  | op == 0xB2 = jumpEqByte pctr program state
+  | op == 0xB3 = jumpEqRegister pctr program state
+  | op == 0xC0 = addMemoryToAcc pctr program state
+  | op == 0xC1 = addValueToAcc pctr program state
+  | op == 0xC2 = interpret program (incPc (incCycles (incInc state)))
+  | op == 0xC3 = interpret program (incPc (incCycles (decInc state)))
+  | op == 0xC4 = interpret program (incPc (incCycles (setInc state 0)))
+  | op == 0xC5 = interpret program (incPc (incCycles (setAcc state (inc state))))
+  | op == 0xC6 = interpret program (incPc (incCycles (setInc state (acc state))))
+  | op == 0xD0 = copyMemoryToAcc pctr program state
+  | op == 0xD1 = setAccToValue pctr program state
+  | op == 0xD2 = copyAccToMemory pctr program state
+  | otherwise = error ("unknown instruction " <> show op)
+  where op = program ! pctr
+        pctr = pc state
+
