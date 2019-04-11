@@ -75,13 +75,13 @@ addAcc value = do
   s <- get
   put $ s { acc = value + acc s }
 
-setRegister :: Int -> Int -> State CpuState ()
-setRegister index value = do
+setRegisterAt :: Int -> Int -> State CpuState ()
+setRegisterAt index value = do
   s <- get
   put $ s { registers = registers s // [(index, value)] }
 
-registerAt :: Int -> CpuState -> Int
-registerAt index = (! index) . registers
+getRegisterAt :: Int -> CpuState -> Int
+getRegisterAt index = (! index) . registers
 
 arrayLength :: Array Int Int -> Int 
 arrayLength array = upper - lower + 1
