@@ -83,12 +83,10 @@ setRegisterAt index value = do
 getRegisterAt :: Int -> CpuState -> Int
 getRegisterAt index = (! index) . registers
 
-arrayLength :: Array Int Int -> Int 
-arrayLength array = upper - lower + 1
-  where (lower, upper) = bounds array
-
-halt :: CpuState -> CpuState
-halt = id
+halt :: State CpuState ()
+halt = do
+  s <- get
+  put s
 
 interpret :: Program -> State CpuState ()
 interpret program = do
@@ -96,11 +94,10 @@ interpret program = do
   let pctr = pc s
   run program pctr
   incCycles
-  
+
 run :: Program -> Int -> State CpuState ()
 run program pctr
-  | op == 0x00 = do s <- get
-                    put s
+  | op == 0x00 = halt
   | op == 0xB1 = do let byte = program ! (pctr + 1)
                     setPc byte
                     interpret program
@@ -163,4 +160,3 @@ run program pctr
                     interpret program
   | otherwise = error ("Unknown instruction " <> show op <> ".")
   where op = program ! pctr
-
