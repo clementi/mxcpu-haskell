@@ -1,11 +1,11 @@
 module Main where
 
--- import MXCPU (Program, CpuState(..), initialState, loadProgram)
+import MXCPU (Program, CpuState(..), initialState, loadProgram, interpret)
 
--- main :: IO ()
--- main = do
---   program <- loadProgram <$> getContents
---   let finalState = interpret program initialState
---   putStrLn $ show finalState
+--main :: IO ()
+--main = do
+  --program <- loadProgram <$> getContents
+  --finalState <- interpret program initialState
+  --putStrLn $ show finalState
 
-main = putStrLn "Hi!"
+main = putStrLn "Hi"

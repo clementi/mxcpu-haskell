@@ -1,4 +1,4 @@
-module MXCPU where
+module MXCPU (Program, CpuState(..), initialState, loadProgram, interpret) where
 
 import Control.Monad.State
 import Data.Array
@@ -90,6 +90,91 @@ arrayLength array = upper - lower + 1
 halt :: CpuState -> CpuState
 halt = id
 
+interpret :: Program -> State CpuState ()
+interpret program = do
+  s <- get
+  let pctr = pc s
+  run program pctr
+  
+run :: Program -> Int -> State CpuState ()
+run program pctr
+  | op == 0x00 = incCycles
+  | op == 0xB1 = do let byte = program ! (pctr + 1)
+                    setPc byte
+                    interpret program
+  | op == 0xB2 = do s <- get
+                    let index = program ! (pctr + 1)
+                        byte = program ! (pctr + 2)
+                    if acc s == getRegisterAt index s
+                       then setPc byte
+                       else setPc 3
+                    interpret program
+  | op == 0xB3 = do s <- get
+                    let value = program ! (pctr + 1)
+                        byte = program ! (pctr + 2)
+                    if acc s == value
+                       then setPc byte
+                       else setPc 3
+                    interpret program
+  | op == 0xC0 = do s <- get
+                    let index = program ! (pctr + 1)
+                    addAcc (getRegisterAt index s)
+                    interpret program
+  | op == 0xC1 = do let value = program ! (pctr + 1)
+                    addAcc value
+                    interpret program
+  | op == 0xC2 = do incInc
+                    interpret program
+  | op == 0xC3 = do decInc
+                    interpret program
+  | op == 0xC4 = do setInc 0
+                    interpret program
+  | op == 0xC5 = do s <- get
+                    let counter = inc s
+                    setAcc counter
+                    interpret program
+  | op == 0xC6 = do s <- get
+                    let accumulator = acc s
+                    setInc accumulator
+                    interpret program
+  | op == 0xD0 = do s <- get
+                    let index = program ! (pctr + 1)
+                        value = getRegisterAt index s
+                    setAcc value
+                    interpret program
+  | op == 0xD1 = do let value = program ! (pctr + 1)
+                    setAcc value
+                    interpret program
+  | op == 0xD2 = do s <- get
+                    let index = program ! (pctr + 1)
+                    setRegisterAt index (acc s)
+                    interpret program
+  where op = program ! pctr
+
+
+-- #region Commented stuff 
+
+-- interpret :: Program -> CpuState -> CpuState
+-- interpret program state
+--   | arrayLength program == 0 = state
+--   | op == 0x00 = incCycles . halt $ state
+--   | op == 0xB1 = setPcToByte pctr program state
+--   | op == 0xB2 = jumpEqRegister pctr program state
+--   | op == 0xB3 = jumpEqByte pctr program state
+--   | op == 0xC0 = addMemoryToAcc pctr program state
+--   | op == 0xC1 = addValueToAcc pctr program state
+--   | op == 0xC2 = interpret program (incPc (incCycles (incInc state)))
+--   | op == 0xC3 = interpret program (incPc (incCycles (decInc state)))
+--   | op == 0xC4 = interpret program (incPc (incCycles (setInc state 0)))
+--   | op == 0xC5 = interpret program (incPc (incCycles (setAcc state (inc state))))
+--   | op == 0xC6 = interpret program (incPc (incCycles (setInc state (acc state))))
+--   | op == 0xD0 = copyMemoryToAcc pctr program state
+--   | op == 0xD1 = setAccToValue pctr program state
+--   | op == 0xD2 = copyAccToMemory pctr program state
+--   | otherwise = error ("unknown instruction " <> show op)
+--   where op = program ! pctr
+--         pctr = pc state
+
 -- setPcToByte :: Int -> Program -> State CpuState ()
 -- setPcToByte pctr program = interpret >= incCycles >>= (setPc byte)
 --   where byte = program ! (pctr + 1)
@@ -130,24 +215,4 @@ halt = id
 -- copyAccToMemory pctr program state = interpret program (incPcBy 2 (incCycles (setRegister state index (acc state))))
 --   where index = program ! (pctr + 1)
 
--- interpret :: Program -> CpuState -> CpuState
--- interpret program state
---   | arrayLength program == 0 = state
---   | op == 0x00 = incCycles . halt $ state
---   | op == 0xB1 = setPcToByte pctr program state
---   | op == 0xB2 = jumpEqRegister pctr program state
---   | op == 0xB3 = jumpEqByte pctr program state
---   | op == 0xC0 = addMemoryToAcc pctr program state
---   | op == 0xC1 = addValueToAcc pctr program state
---   | op == 0xC2 = interpret program (incPc (incCycles (incInc state)))
---   | op == 0xC3 = interpret program (incPc (incCycles (decInc state)))
---   | op == 0xC4 = interpret program (incPc (incCycles (setInc state 0)))
---   | op == 0xC5 = interpret program (incPc (incCycles (setAcc state (inc state))))
---   | op == 0xC6 = interpret program (incPc (incCycles (setInc state (acc state))))
---   | op == 0xD0 = copyMemoryToAcc pctr program state
---   | op == 0xD1 = setAccToValue pctr program state
---   | op == 0xD2 = copyAccToMemory pctr program state
---   | otherwise = error ("unknown instruction " <> show op)
---   where op = program ! pctr
---         pctr = pc state
-
+-- #endregion
