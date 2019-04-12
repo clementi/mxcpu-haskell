@@ -33,10 +33,5 @@ C4 D1 00 D2 00 C2 C5 B3 0B 10 C0 00 D2 00 B1 05 00
 Run your program: `$ cat myprogram.txt | stack run`
 
 ```
-Running program
-Terminating
-PC      0x10
-INC     0xb
-ACC     0xb
-MEMORY  0x37,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x3,0x8
+CpuState {cycles = 67, inc = 11, pc = 17, acc = 11, registers = array (0,15) [(0,55),(1,0),(2,0),(3,0),(4,0),(5,0),(6,0),(7,0),(8,0),(9,0),(10,0),(11,0),(12,0),(13,0),(14,0),(15,0)]}
 ```
