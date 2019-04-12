@@ -99,7 +99,8 @@ interpret program = do
   
 run :: Program -> Int -> State CpuState ()
 run program pctr
-  | op == 0x00 = incPc
+  | op == 0x00 = do s <- get
+                    put s
   | op == 0xB1 = do let byte = program ! (pctr + 1)
                     setPc byte
                     interpret program
