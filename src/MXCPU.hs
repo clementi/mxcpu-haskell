@@ -56,9 +56,7 @@ setPc value = do
   put $ s { pc = value }
 
 incPc :: State CpuState ()
-incPc = do
-  s <- get
-  put $ s { pc = succ $ pc s }
+incPc = incPcBy 1
 
 incPcBy :: Int -> State CpuState ()
 incPcBy value = do
