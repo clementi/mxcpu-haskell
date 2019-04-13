@@ -82,9 +82,7 @@ getRegisterAt :: Int -> CpuState -> Int
 getRegisterAt index = (! index) . registers
 
 halt :: State CpuState ()
-halt = do
-  s <- get
-  put s
+halt = put =<< get
 
 interpret :: Program -> State CpuState ()
 interpret program = do
